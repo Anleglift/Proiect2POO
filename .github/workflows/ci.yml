@@ -1,4 +1,3 @@
-
 name: C++ CI
 
 on:
@@ -10,21 +9,61 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        compiler: [g++, clang++]
+        include:
+          - os: ubuntu-latest
+            compiler: g++
+            executable: ./program
+
+          - os: ubuntu-latest
+            compiler: clang++
+            executable: ./program
+
+          - os: windows-latest
+            compiler: g++
+            executable: ./program.exe
+
+          - os: windows-latest
+            compiler: clang++
+            executable: ./program.exe
 
     steps:
-    - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Install compilers (Linux)
-      if: matrix.os == 'ubuntu-latest'
-      run: sudo apt-get update && sudo apt-get install -y g++ clang
+      - name: Install compilers on Linux
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ clang
 
-    - name: Compile
-      run: |
-        ${{ matrix.compiler }} -Wall -Wextra -Werror -std=c++17 main.cpp -o program
+      - name: Install compilers on Windows
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-clang
 
-    - name: Run
-      shell: bash
-      run: ./program
+      - name: Compile on Linux
+        if: runner.os == 'Linux'
+        run: |
+          ${{ matrix.compiler }} -Wall -Wextra -Werror -std=c++17 main.cpp classes.cpp -o program
+
+      - name: Compile on Windows
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          ${{ matrix.compiler }} -Wall -Wextra -Werror -std=c++17 main.cpp classes.cpp -o program.exe
+
+      - name: Run on Linux
+        if: runner.os == 'Linux'
+        run: ${{ matrix.executable }}
+
+      - name: Run on Windows
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: ${{ matrix.executable }}
