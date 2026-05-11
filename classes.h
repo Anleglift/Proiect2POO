@@ -62,7 +62,6 @@ public:
     void NormalizeazaResursa();
     void Afiseaza(std::ostream &out) const;
 
-    /// Functii virtuale pure specifice temei.
     virtual int CalculeazaRelevanta() const = 0;
     virtual void Normalizeaza() = 0;
     virtual ResursaInternet *clone() const = 0;
